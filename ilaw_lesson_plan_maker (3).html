@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILAW Lesson Plan Maker | AI-Powered System</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        display: ['Cinzel', 'serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* A4 Document Styling */
+        .a4-document {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            color: #000; /* Ensure text is black for the document */
+        }
+
+        .dark .a4-wrapper {
+            background-color: #1e293b; /* slate-800 */
+        }
+
+        .a4-document * {
+            font-family: 'Inter', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+        }
+
+        .a4-document h1, .a4-document h2, .a4-document .header-text {
+            font-family: 'Cinzel', serif;
+        }
+        
+        .a4-document .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .a4-document .doc-table th, 
+        .a4-document .doc-table td {
+            border: 1px solid #1e3a8a; /* Deep blue border as requested */
+            padding: 6px 10px;
+            vertical-align: top;
+        }
+
+        .a4-document .doc-table th {
+            background-color: #eff6ff;
+            font-weight: 600;
+        }
+
+        .a4-document .section-title {
+            background-color: #1e3a8a;
+            color: white;
+            font-weight: bold;
+            padding: 4px 8px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 10pt;
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in-right { animation: slideInRight 0.3s forwards; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Print Specific Styles */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            #app-header, #app-sidebar, #app-toolbar, #toast-container, .no-print {
+                display: none !important;
+            }
+            #app-workspace {
+                padding: 0 !important;
+                background: white !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+            .a4-wrapper {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .a4-document {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 15mm !important; /* Adjust print margins */
+                width: 100% !important;
+                min-height: auto !important;
+            }
+            /* Force page breaks */
+            .page-break-before { page-break-before: always; }
+            .page-break-inside-avoid { page-break-inside: avoid; }
+        }
+
+        /* Loading Overlay */
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .dark .loader-overlay { background: rgba(15,23,42,0.9); }
+        .loader-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Form styling extensions */
+        .form-input {
+            @apply w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-slate-700 text-sm transition-shadow duration-200;
+        }
+        .form-label {
+            @apply block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 tracking-wide uppercase;
+        }
+        .form-group {
+            @apply mb-4;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 h-screen flex flex-col overflow-hidden font-sans transition-colors duration-300">
+
+    <!-- Header -->
+    <header id="app-header" class="h-16 shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-between px-4 sm:px-6 z-20 shadow-sm relative">
+        <div class="flex items-center gap-3">
+            <button id="mobile-menu-btn" class="lg:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 p-2 rounded-md">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-white shadow-md">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">ILAW Lesson Plan Maker</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-wide">AI-Powered Planning System</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button class="p-2 text-slate-500 hover:text-primary-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors" title="Notifications">
+                <i class="far fa-bell"></i>
+            </button>
+            <button id="theme-toggle" class="p-2 text-slate-500 hover:text-primary-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors" title="Toggle Dark Mode">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+            <button class="flex items-center gap-2 text-sm font-medium hover:text-primary-600 transition-colors">
+                <img src="https://ui-avatars.com/api/?name=Teacher+Admin&background=0D8ABC&color=fff" alt="Profile" class="w-8 h-8 rounded-full shadow-sm border border-slate-200 dark:border-slate-600">
+                <span class="hidden sm:inline">Teacher Admin</span>
+                <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Left Sidebar (Inputs) -->
+        <aside id="app-sidebar" class="w-80 shrink-0 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col absolute inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-10 shadow-xl lg:shadow-none">
+            
+            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center glass sticky top-0 z-10">
+                <h2 class="font-semibold text-slate-800 dark:text-slate-200">Configuration</h2>
+                <button id="close-sidebar-btn" class="lg:hidden text-slate-500 hover:text-red-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-24" id="sidebar-scroll">
+                
+                <!-- Accordion 1: Observation Settings -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/50">
+                    <button class="accordion-btn w-full px-4 py-3 flex justify-between items-center text-left font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fas fa-eye text-primary-600"></i> Observation Settings</span>
+                        <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content px-4 py-3 hidden border-t border-slate-200 dark:border-slate-700">
+                        <div class="form-group">
+                            <label class="form-label">Teacher Rank</label>
+                            <select id="teacher-rank" class="form-input">
+                                <option value="t1-3">Teacher I-III (Proficient)</option>
+                                <option value="mt1-4">Master Teacher I-IV (Highly Proficient)</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label">Observation Cycle</label>
+                            <select id="obs-cycle" class="form-input">
+                                <option value="co1">CO 1</option>
+                                <option value="co2">CO 2</option>
+                            </select>
+                        </div>
+                        <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800">
+                            <p class="text-xs text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-info-circle mr-1"></i> PPST Indicators will automatically adjust based on Rank and Cycle.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion 2: Lesson Information -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/50">
+                    <button class="accordion-btn w-full px-4 py-3 flex justify-between items-center text-left font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fas fa-book-open text-primary-600"></i> Lesson Info</span>
+                        <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content px-4 py-3 hidden border-t border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Lesson Title</label>
+                            <input type="text" id="lesson-title" class="form-input" placeholder="e.g., Parts of a Plant">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="form-group">
+                                <label class="form-label">Subject</label>
+                                <input type="text" id="lesson-subject" class="form-input" placeholder="Science">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Grade</label>
+                                <input type="text" id="lesson-grade" class="form-input" placeholder="Grade 4">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="form-group">
+                                <label class="form-label">Section</label>
+                                <input type="text" id="lesson-section" class="form-input" placeholder="Mabini">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quarter/Term</label>
+                                <select id="lesson-term" class="form-input">
+                                    <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="form-group">
+                                <label class="form-label">Week</label>
+                                <input type="number" id="lesson-week" class="form-input" placeholder="1" min="1" max="10">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sessions</label>
+                                <input type="number" id="lesson-sessions" class="form-input" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" id="lesson-date" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion 3: Curriculum -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/50">
+                    <button class="accordion-btn w-full px-4 py-3 flex justify-between items-center text-left font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fas fa-sitemap text-primary-600"></i> Curriculum Target</span>
+                        <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content px-4 py-3 hidden border-t border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Learning Competency (MELC)</label>
+                            <textarea id="curric-competency" class="form-input" rows="2" placeholder="Paste competency code and description here..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Key Learning Objective</label>
+                            <textarea id="curric-objective" class="form-input" rows="2" placeholder="What should learners achieve by the end of the lesson?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Values Integration</label>
+                            <input type="text" id="curric-values" class="form-input" placeholder="e.g., Environmental Stewardship">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion 4: AI Settings -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/50">
+                    <button class="accordion-btn w-full px-4 py-3 flex justify-between items-center text-left font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fas fa-robot text-primary-600"></i> AI Assistant Config</span>
+                        <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content px-4 py-3 hidden border-t border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Teaching Style</label>
+                            <select id="ai-style" class="form-input">
+                                <option>Inquiry-Based</option>
+                                <option>Direct Instruction</option>
+                                <option>Constructivist</option>
+                                <option>Collaborative</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Target Taxonomy Level</label>
+                            <select id="ai-bloom" class="form-input">
+                                <option>Applying & Analyzing (HOTS)</option>
+                                <option>Evaluating & Creating (HOTS)</option>
+                                <option>Remembering & Understanding (LOTS)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Custom Instruction Prompt</label>
+                            <textarea id="ai-prompt" class="form-input" rows="2" placeholder="Any specific requirements for the AI? (e.g., Include local context)"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="form-group mt-4">
+                    <label class="form-label">Reference Material (Optional)</label>
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-slate-400 mb-2"></i>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Drag & drop files or click to browse</p>
+                        <p class="text-xs text-slate-500 mt-1">Accepts PDF, DOCX, TXT for context extraction</p>
+                        <input type="file" id="file-upload" class="hidden" accept=".pdf,.doc,.docx,.txt">
+                    </div>
+                    <div id="file-preview" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-700 rounded-md flex items-center justify-between text-sm">
+                        <span class="flex items-center gap-2 truncate"><i class="fas fa-file-alt text-primary-500"></i> <span id="file-name" class="truncate max-w-[150px]"></span></span>
+                        <button id="remove-file" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons (Sticky Bottom) -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 absolute bottom-0 left-0 w-full glass">
+                <button id="btn-generate" class="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-magic"></i> Generate Lesson Plan
+                </button>
+            </div>
+        </aside>
+
+        <!-- Right Workspace (Document View) -->
+        <section id="app-workspace" class="flex-1 bg-slate-200 dark:bg-slate-950 flex flex-col relative">
+            
+            <!-- Toolbar -->
+            <div id="app-toolbar" class="h-12 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <div class="flex border-r border-slate-200 dark:border-slate-700 pr-4">
+                        <button class="tab-btn active px-3 py-1 text-sm font-semibold text-primary-600 border-b-2 border-primary-600">Document</button>
+                        <button class="tab-btn px-3 py-1 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Guidelines</button>
+                    </div>
+                    <span id="save-status" class="text-xs text-slate-500 flex items-center gap-1">
+                        <i class="fas fa-check-circle text-green-500"></i> Saved to local storage
+                    </span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button id="btn-reset" class="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded transition-colors" title="Clear form">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button id="btn-export" class="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded transition-colors">
+                        <i class="fas fa-file-export"></i> Export HTML
+                    </button>
+                    <button id="btn-print" class="px-3 py-1.5 text-sm text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500 rounded shadow transition-colors">
+                        <i class="fas fa-print"></i> Print A4
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Area for Document -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8 a4-wrapper flex justify-center items-start fade-in" id="workspace-scroll">
+                
+                <!-- THE A4 DOCUMENT (ILAW Framework) -->
+                <div id="printable-document" class="a4-document group relative">
+                    
+                    <!-- Placeholder overlay initially -->
+                    <div id="doc-placeholder" class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-8 transition-opacity duration-300">
+                        <div class="w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-signature text-3xl text-primary-600 dark:text-primary-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 font-serif mb-2">Ready to Draft</h3>
+                        <p class="text-slate-500 dark:text-slate-400 max-w-md">Fill out the configuration in the sidebar and click Generate to create an AI-assisted ILAW aligned lesson plan.</p>
+                    </div>
+
+                    <!-- Document Content -->
+                    <div id="doc-content" class="opacity-0 transition-opacity duration-500">
+                        
+                        <!-- Document Header -->
+                        <div class="text-center mb-6">
+                            <p class="text-sm font-serif">Republic of the Philippines</p>
+                            <p class="text-sm font-bold font-serif">Department of Education</p>
+                            <p class="text-sm">Region V (Bicol)</p>
+                            <p class="text-sm">Schools Division of Naga City</p>
+                            <br>
+                            <h1 class="text-xl font-bold uppercase tracking-widest mt-2">Lesson Plan</h1>
+                            <h2 class="text-md font-semibold tracking-wider text-slate-600">ILAW Framework Integration</h2>
+                        </div>
+
+                        <!-- Lesson Info Table -->
+                        <table class="doc-table">
+                            <tbody>
+                                <tr>
+                                    <th width="15%" class="text-left">Teacher</th>
+                                    <td width="35%" id="doc-teacher" class="font-semibold border-r-0">Name Here</td>
+                                    <th width="15%" class="text-left border-l-0">Grade Level</th>
+                                    <td width="35%" id="doc-grade">Grade Here</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-left">Learning Area</th>
+                                    <td id="doc-subject">Subject Here</td>
+                                    <th class="text-left">Section</th>
+                                    <td id="doc-section">Section Here</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-left">Teaching Date</th>
+                                    <td id="doc-date">Date Here</td>
+                                    <th class="text-left">Quarter/Week</th>
+                                    <td id="doc-quarter">Quarter / Week Here</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Section I: INTENTIONS -->
+                        <div class="section-title">I. Intentions (Mga Layunin)</div>
+                        <table class="doc-table">
+                            <tbody>
+                                <tr>
+                                    <th width="25%" class="text-left">A. Content Standards</th>
+                                    <td id="doc-cs">The learners demonstrate understanding of...</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-left">B. Performance Standards</th>
+                                    <td id="doc-ps">The learners should be able to...</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-left">C. Learning Competencies</th>
+                                    <td id="doc-lc" class="font-medium bg-yellow-50">Competency Code: Description</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-left">D. Specific Learning Objectives</th>
+                                    <td id="doc-obj">
+                                        At the end of the lesson, learners are expected to:<br>
+                                        1. ...<br>
+                                        2. ...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Section II: LEARNING EXPERIENCE -->
+                        <div class="section-title page-break-before">II. Learning Experience (Karanasan sa Pagkatuto)</div>
+                        <p class="text-xs mb-2 italic">Note: Instructional procedures incorporate strategies addressing diverse learner needs and PPST indicators.</p>
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th width="20%">Teacher's Activity / Strategy</th>
+                                    <th width="50%">Detailed Procedure / Script</th>
+                                    <th width="30%">Learner's Expected Response / Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="doc-procedure-body">
+                                <!-- Dynamically populated by JS -->
+                                <tr>
+                                    <td class="font-semibold italic text-sm">A. Motivation / Review</td>
+                                    <td class="text-sm">Greeting the class. Reviewing previous lesson.</td>
+                                    <td class="text-sm italic">Learners participate.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Section III: ASSESSING LEARNING -->
+                        <div class="section-title page-break-before">III. Assessing Learning (Pagtataya ng Pagkatuto)</div>
+                        <table class="doc-table">
+                            <tbody>
+                                <tr>
+                                    <td class="p-4" id="doc-assessment">
+                                        <p class="font-semibold mb-2">Formative Assessment Task:</p>
+                                        <p class="mb-4 text-sm">Assessment description will be generated here.</p>
+                                        <p class="font-semibold text-sm">Rubric / Criteria for Success:</p>
+                                        <ul class="list-disc pl-5 text-sm" id="doc-rubric">
+                                            <li>Criteria 1</li>
+                                            <li>Criteria 2</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Section IV: WAYS FORWARD -->
+                        <div class="section-title">IV. Ways Forward (Mga Susunod na Hakbang)</div>
+                        <table class="doc-table mb-8">
+                            <tbody>
+                                <tr>
+                                    <th width="25%" class="text-left">A. Remarks / Reflection</th>
+                                    <td id="doc-reflection" class="text-sm">
+                                        <p>No. of learners who earned 80% on the formative assessment: ____</p>
+                                        <p>No. of learners who require additional activities for remediation: ____</p>
+                                        <p class="mt-2 text-slate-500 italic">Teacher's reflective notes will be inserted here.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Signatures -->
+                        <div class="grid grid-cols-3 gap-4 mt-12 page-break-inside-avoid">
+                            <div class="text-center">
+                                <p class="mb-8 text-sm">Prepared by:</p>
+                                <div class="border-b border-black w-4/5 mx-auto mb-1"></div>
+                                <p class="font-bold text-sm" id="sig-teacher">TEACHER NAME</p>
+                                <p class="text-xs text-slate-600" id="sig-rank">Teacher Rank</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="mb-8 text-sm">Checked by:</p>
+                                <div class="border-b border-black w-4/5 mx-auto mb-1"></div>
+                                <p class="font-bold text-sm">MASTER TEACHER / HEAD</p>
+                                <p class="text-xs text-slate-600">Master Teacher / Dept. Head</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="mb-8 text-sm">Noted by:</p>
+                                <div class="border-b border-black w-4/5 mx-auto mb-1"></div>
+                                <p class="font-bold text-sm">SCHOOL PRINCIPAL</p>
+                                <p class="text-xs text-slate-600">Principal I</p>
+                            </div>
+                        </div>
+
+                        <!-- AI Declaration Footer -->
+                        <div class="mt-12 text-[9px] text-center text-slate-500 border-t border-slate-200 pt-2 no-print">
+                            <i class="fas fa-robot mr-1"></i> AI Declaration: This document's initial draft was generated using the ILAW AI System. The teacher reviewed, verified, and adapted the content before implementation ensuring pedagogical soundness and contextual relevance.
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="loader-overlay">
+        <div class="spinner mb-4"></div>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white font-serif" id="loader-title">Synthesizing Lesson Plan...</h3>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-2" id="loader-text">Aligning with PPST Indicators and ILAW Framework</p>
+        
+        <!-- Progress Steps -->
+        <div class="w-64 mt-6">
+            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                <span>Progress</span>
+                <span id="loader-pct">0%</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 dark:bg-slate-700">
+                <div class="bg-primary-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%" id="loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        /**
+         * APPLICATION CONFIGURATION & STATE
+         * Handles data structures and local storage persistence.
+         */
+        const Config = {
+            storageKey: 'ilaw_app_state',
+            themeKey: 'ilaw_theme',
+            ppst: {
+                't1-3': {
+                    label: 'Teacher I-III (Proficient)',
+                    indicators: [
+                        { id: '1.1.2', desc: 'Apply knowledge of content within and across curriculum teaching areas.' },
+                        { id: '1.5.2', desc: 'Apply a range of teaching strategies to develop critical and creative thinking.' },
+                        { id: '4.1.2', desc: 'Plan, manage and implement developmentally sequenced teaching and learning processes.' }
+                    ]
+                },
+                'mt1-4': {
+                    label: 'Master Teacher I-IV (Highly Proficient)',
+                    indicators: [
+                        { id: '1.1.3', desc: 'Model effective applications of content knowledge within and across curriculum.' },
+                        { id: '1.5.3', desc: 'Develop and apply effective teaching strategies to promote critical and creative thinking.' },
+                        { id: '4.1.3', desc: 'Develop sequenced teaching and learning processes to meet curriculum requirements.' }
+                    ]
+                }
+            }
+        };
+
+        // Default state
+        let appState = {
+            teacherRank: 't1-3',
+            cycle: 'co1',
+            title: '',
+            subject: '',
+            grade: '',
+            section: '',
+            term: 'Q1',
+            week: '',
+            sessions: '1',
+            date: '',
+            competency: '',
+            objective: '',
+            values: '',
+            aiStyle: 'Inquiry-Based',
+            aiBloom: 'Applying & Analyzing (HOTS)',
+            aiPrompt: '',
+            hasGenerated: false
+        };
+
+        /**
+         * STREAMING_CHUNK:JavaScript - Utilities and DOM Helpers
+         */
+        const UI = {
+            get: (id) => document.getElementById(id),
+            
+            showToast: (message, type = 'success') => {
+                const container = UI.get('toast-container');
+                const toast = document.createElement('div');
+                
+                const colors = {
+                    success: 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:text-green-200',
+                    error: 'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/50 dark:text-red-200',
+                    info: 'bg-blue-100 border-blue-500 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                };
+                
+                const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+
+                toast.className = `flex items-center gap-3 px-4 py-3 border-l-4 rounded shadow-lg transition-all duration-300 transform translate-x-full ${colors[type]}`;
+                toast.innerHTML = `<i class="fas ${icons[type]} text-lg"></i><span class="text-sm font-medium">${message}</span>`;
+                
+                container.appendChild(toast);
+                
+                // Animate in
+                setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+                
+                // Animate out and remove
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+
+            toggleTheme: () => {
+                const html = document.documentElement;
+                const icon = UI.get('theme-icon');
+                if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    icon.classList.replace('fa-sun', 'fa-moon');
+                    localStorage.setItem(Config.themeKey, 'light');
+                } else {
+                    html.classList.add('dark');
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                    localStorage.setItem(Config.themeKey, 'dark');
+                }
+            },
+
+            initTheme: () => {
+                const savedTheme = localStorage.getItem(Config.themeKey);
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                    UI.get('theme-icon').classList.replace('fa-moon', 'fa-sun');
+                }
+            },
+
+            simulateLoading: async (callback) => {
+                const loader = UI.get('loader');
+                const bar = UI.get('loader-bar');
+                const pct = UI.get('loader-pct');
+                const text = UI.get('loader-text');
+                
+                loader.classList.add('active');
+                
+                const steps = [
+                    { p: 20, t: 'Analyzing Curriculum Standards...' },
+                    { p: 45, t: 'Structuring ILAW Framework Sections...' },
+                    { p: 70, t: 'Generating Pedagogical Strategies...' },
+                    { p: 90, t: 'Formulating Assessment Criteria...' },
+                    { p: 100, t: 'Finalizing Document Layout...' }
+                ];
+
+                for (let i = 0; i < steps.length; i++) {
+                    await new Promise(r => setTimeout(r, 600)); // Simulate delay
+                    bar.style.width = steps[i].p + '%';
+                    pct.textContent = steps[i].p + '%';
+                    text.textContent = steps[i].t;
+                }
+
+                setTimeout(() => {
+                    loader.classList.remove('active');
+                    setTimeout(() => {
+                        bar.style.width = '0%';
+                        pct.textContent = '0%';
+                    }, 300);
+                    callback();
+                }, 400);
+            }
+        };
+
+        /**
+         * STREAMING_CHUNK:JavaScript - Form Handling and Logic
+         */
+        const AppLogic = {
+            
+            initAccordions: () => {
+                document.querySelectorAll('.accordion-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const content = this.nextElementSibling;
+                        const icon = this.querySelector('.fa-chevron-down');
+                        
+                        // Close others (Optional, standard accordion behavior)
+                        // document.querySelectorAll('.accordion-content').forEach(c => {
+                        //     if(c !== content && !c.classList.contains('hidden')) {
+                        //         c.classList.add('hidden');
+                        //         c.previousElementSibling.querySelector('.fa-chevron-down').style.transform = 'rotate(0deg)';
+                        //     }
+                        // });
+
+                        content.classList.toggle('hidden');
+                        icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                    });
+                });
+                // Open first accordion by default
+                document.querySelector('.accordion-btn').click();
+            },
+
+            initFileDrop: () => {
+                const dropZone = UI.get('drop-zone');
+                const fileInput = UI.get('file-upload');
+                const preview = UI.get('file-preview');
+                const fileName = UI.get('file-name');
+                const removeBtn = UI.get('remove-file');
+
+                const handleFiles = (files) => {
+                    if (files.length > 0) {
+                        fileName.textContent = files[0].name;
+                        dropZone.classList.add('hidden');
+                        preview.classList.remove('hidden');
+                        UI.showToast('Reference material attached for AI context.');
+                    }
+                };
+
+                dropZone.addEventListener('click', () => fileInput.click());
+                
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+                });
+
+                ['dragleave', 'dragend'].forEach(type => {
+                    dropZone.addEventListener(type, () => {
+                        dropZone.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+                    });
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+                    handleFiles(e.dataTransfer.files);
+                });
+
+                fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+                removeBtn.addEventListener('click', () => {
+                    fileInput.value = '';
+                    preview.classList.add('hidden');
+                    dropZone.classList.remove('hidden');
+                });
+            },
+
+            saveState: () => {
+                // Gather inputs
+                appState = {
+                    teacherRank: UI.get('teacher-rank').value,
+                    cycle: UI.get('obs-cycle').value,
+                    title: UI.get('lesson-title').value,
+                    subject: UI.get('lesson-subject').value,
+                    grade: UI.get('lesson-grade').value,
+                    section: UI.get('lesson-section').value,
+                    term: UI.get('lesson-term').value,
+                    week: UI.get('lesson-week').value,
+                    sessions: UI.get('lesson-sessions').value,
+                    date: UI.get('lesson-date').value,
+                    competency: UI.get('curric-competency').value,
+                    objective: UI.get('curric-objective').value,
+                    values: UI.get('curric-values').value,
+                    aiStyle: UI.get('ai-style').value,
+                    aiBloom: UI.get('ai-bloom').value,
+                    aiPrompt: UI.get('ai-prompt').value,
+                    hasGenerated: appState.hasGenerated
+                };
+                localStorage.setItem(Config.storageKey, JSON.stringify(appState));
+                
+                const status = UI.get('save-status');
+                status.style.opacity = '1';
+                setTimeout(() => status.style.opacity = '0.5', 2000);
+            },
+
+            loadState: () => {
+                const saved = localStorage.getItem(Config.storageKey);
+                if (saved) {
+                    try {
+                        appState = JSON.parse(saved);
+                        // Populate inputs
+                        UI.get('teacher-rank').value = appState.teacherRank || 't1-3';
+                        UI.get('obs-cycle').value = appState.cycle || 'co1';
+                        UI.get('lesson-title').value = appState.title || '';
+                        UI.get('lesson-subject').value = appState.subject || '';
+                        UI.get('lesson-grade').value = appState.grade || '';
+                        UI.get('lesson-section').value = appState.section || '';
+                        UI.get('lesson-term').value = appState.term || 'Q1';
+                        UI.get('lesson-week').value = appState.week || '';
+                        UI.get('lesson-sessions').value = appState.sessions || '1';
+                        UI.get('lesson-date').value = appState.date || '';
+                        UI.get('curric-competency').value = appState.competency || '';
+                        UI.get('curric-objective').value = appState.objective || '';
+                        UI.get('curric-values').value = appState.values || '';
+                        UI.get('ai-style').value = appState.aiStyle || 'Inquiry-Based';
+                        UI.get('ai-bloom').value = appState.aiBloom || 'Applying & Analyzing (HOTS)';
+                        UI.get('ai-prompt').value = appState.aiPrompt || '';
+
+                        if(appState.hasGenerated) {
+                            // If previously generated, regenerate visually but don't show loading
+                            AIEngine.renderDocument(false);
+                        }
+                    } catch (e) { console.error("Error loading state", e); }
+                }
+            },
+
+            clearState: () => {
+                if(confirm('Are you sure you want to reset all fields? This cannot be undone.')) {
+                    localStorage.removeItem(Config.storageKey);
+                    location.reload();
+                }
+            }
+        };
+
+        /**
+         * STREAMING_CHUNK:JavaScript - AI Generation Engine (Simulated)
+         */
+        const AIEngine = {
+            generate: () => {
+                AppLogic.saveState(); // Ensure latest data is saved
+
+                // Basic validation
+                if(!appState.title || !appState.subject || !appState.objective) {
+                    UI.showToast('Please fill in Lesson Title, Subject, and Key Objective before generating.', 'error');
+                    // Open relevant accordions visually
+                    return;
+                }
+
+                UI.simulateLoading(() => {
+                    appState.hasGenerated = true;
+                    AppLogic.saveState();
+                    AIEngine.renderDocument(true);
+                });
+            },
+
+            renderDocument: (showToast = false) => {
+                // 1. Hide Placeholder, Show Content
+                UI.get('doc-placeholder').style.opacity = '0';
+                setTimeout(() => {
+                    UI.get('doc-placeholder').style.display = 'none';
+                    UI.get('doc-content').classList.remove('opacity-0');
+                    UI.get('doc-content').classList.add('opacity-100');
+                }, 300);
+
+                // 2. Populate Header Table
+                const safeStr = (str, fallback = '_________________') => str ? str : fallback;
+                
+                UI.get('doc-teacher').textContent = "Teacher Admin"; // Simulated user
+                UI.get('doc-subject').textContent = safeStr(appState.subject);
+                
+                // Format Date nicely if exists
+                let dateStr = appState.date;
+                if(dateStr) {
+                    const d = new Date(dateStr);
+                    dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                }
+                UI.get('doc-date').textContent = safeStr(dateStr);
+                
+                UI.get('doc-grade').textContent = safeStr(appState.grade);
+                UI.get('doc-section').textContent = safeStr(appState.section);
+                
+                const qtrWk = `${appState.term} / Week ${appState.week || '_'}`;
+                UI.get('doc-quarter').textContent = qtrWk;
+
+                // Signatures
+                UI.get('sig-teacher').textContent = "Teacher Admin";
+                UI.get('sig-rank').textContent = Config.ppst[appState.teacherRank].label.split('(')[0].trim();
+
+                // 3. Populate Section I: Intentions
+                UI.get('doc-lc').innerHTML = safeStr(appState.competency).replace(/\n/g, '<br>');
+                
+                // Simulated AI Expansion of Standards based on Subject (Mock logic)
+                UI.get('doc-cs').textContent = `The learners demonstrate an understanding of core concepts in ${appState.subject || 'the subject area'}, particularly focusing on ${appState.title || 'the topic'}.`;
+                UI.get('doc-ps').textContent = `The learners should be able to apply their knowledge of ${appState.title || 'the topic'} in real-world scenarios, demonstrating ${appState.values || 'core values'}.`;
+                
+                // Format Objectives
+                let objs = appState.objective.split('\n').map(o => o.trim()).filter(o => o);
+                if(objs.length === 0) objs = [`Understand the principles of ${appState.title}`, `Apply concepts in practical exercises`];
+                
+                let objHtml = `At the end of the lesson, utilizing a/an ${appState.aiStyle} approach, learners are expected to:<br>`;
+                objs.forEach((o, i) => objHtml += `${i+1}. ${o}<br>`);
+                UI.get('doc-obj').innerHTML = objHtml;
+
+                // 4. Populate Section II: Learning Experience (Dynamic Table Rows)
+                const tbody = UI.get('doc-procedure-body');
+                tbody.innerHTML = ''; // Clear existing
+
+                // Fetch indicators for context
+                const indicators = Config.ppst[appState.teacherRank].indicators;
+                const ind1 = indicators[0]?.id || '1.1.2';
+                const ind2 = indicators[1]?.id || '1.5.2';
+
+                // Simulated Lesson Stages (ILAW specific or generic DepEd)
+                const stages = [
+                    {
+                        phase: "A. Introduction (Motivation & Review)",
+                        teacher: `Greet learners. Review previous concepts related to ${appState.subject}. Introduce "${appState.title}" using a highly engaging hook (e.g., short video or real-world problem).<br><br><span class="text-xs text-blue-700 bg-blue-50 px-1 rounded">Integration: PPST ${ind1}</span>`,
+                        learner: "Learners actively participate in the review. They observe the hook and share initial thoughts."
+                    },
+                    {
+                        phase: "B. Interaction (Lesson Proper / Activity)",
+                        teacher: `Employ ${appState.aiStyle} strategy. Facilitate a group activity where students explore the main concepts. Provide scaffolding as needed.<br><em>"Class, based on our objective, analyze the data provided on your activity sheets..."</em>`,
+                        learner: "Groups collaborate, discuss findings, and formulate answers. (Collaboration skill)"
+                    },
+                    {
+                        phase: "C. Integration (Discussion & Abstraction)",
+                        teacher: `Process group outputs. Emphasize the connection to ${appState.values || 'values'}. Ask Higher-Order Thinking Questions based on ${appState.aiBloom}.<br><br><span class="text-xs text-blue-700 bg-blue-50 px-1 rounded">Integration: PPST ${ind2}</span>`,
+                        learner: "Learners present outputs, answer analytical questions, and generalize the concept."
+                    }
+                ];
+
+                stages.forEach(stage => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="font-semibold text-sm border-slate-300">${stage.phase}</td>
+                        <td class="text-sm border-slate-300 leading-relaxed">${stage.teacher}</td>
+                        <td class="text-sm italic border-slate-300 text-slate-700">${stage.learner}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 5. Assessment
+                UI.get('doc-assessment').innerHTML = `
+                    <p class="font-semibold mb-2">Formative Assessment Task: Concept Application</p>
+                    <p class="mb-4 text-sm">Students will complete a short output demonstrating their grasp of "${appState.title}". This aligns with the objective: <em>${objs[0]}</em>.</p>
+                    <p class="font-semibold text-sm mb-1">Rubric / Criteria for Success:</p>
+                    <ul class="list-disc pl-5 text-sm">
+                        <li><strong>Accuracy (40%):</strong> Correct application of concepts.</li>
+                        <li><strong>Analysis (40%):</strong> Depth of understanding shown. (Aligns with ${appState.aiBloom})</li>
+                        <li><strong>Clarity (20%):</strong> Clear presentation of ideas.</li>
+                    </ul>
+                `;
+
+                if(showToast) UI.showToast('Lesson Plan generated successfully!');
+            }
+        };
+
+        /**
+         * STREAMING_CHUNK:JavaScript - Export and Initialization
+         */
+        
+        // Export to HTML (Clipboard for Word pasting)
+        UI.get('btn-export').addEventListener('click', () => {
+            if(!appState.hasGenerated) {
+                UI.showToast('Generate a lesson plan first.', 'error');
+                return;
+            }
+            
+            const docElement = UI.get('printable-document');
+            // Clone to manipulate before copy
+            const clone = docElement.cloneNode(true);
+            
+            // Remove UI elements from clone
+            const overlay = clone.querySelector('#doc-placeholder');
+            if(overlay) overlay.remove();
+            
+            // Basic styles for clipboard HTML to ensure tables look okay in Word
+            const htmlContent = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><style>
+                    table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt; }
+                    th, td { border: 1px solid black; padding: 5px; text-align: left; vertical-align: top; }
+                    th { background-color: #f0f0f0; }
+                    .section-title { background-color: #1e3a8a; color: white; font-weight: bold; padding: 5px; margin-top: 15px;}
+                    body { font-family: Arial, sans-serif; }
+                </style></head>
+                <body>${clone.innerHTML}</body>
+                </html>
+            `;
+
+            // Use Clipboard API
+            const blob = new Blob([htmlContent], {type: 'text/html'});
+            const data = [new ClipboardItem({'text/html': blob})];
+            
+            navigator.clipboard.write(data).then(() => {
+                UI.showToast('Document copied to clipboard! Paste it into MS Word.');
+            }).catch(err => {
+                console.error('Clipboard failed, fallback to execCommand', err);
+                // Fallback for iframe/older browsers
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                document.body.appendChild(tempDiv);
+                
+                const range = document.createRange();
+                range.selectNodeContents(tempDiv);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                try {
+                    document.execCommand('copy');
+                    UI.showToast('Copied to clipboard. Paste into Word.');
+                } catch (e) {
+                    UI.showToast('Failed to copy. Try printing instead.', 'error');
+                }
+                
+                document.body.removeChild(tempDiv);
+            });
+        });
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Init UI
+            UI.initTheme();
+            AppLogic.initAccordions();
+            AppLogic.initFileDrop();
+            AppLogic.loadState();
+
+            // Theme Toggle
+            UI.get('theme-toggle').addEventListener('click', UI.toggleTheme);
+
+            // Mobile Menu
+            const sidebar = UI.get('app-sidebar');
+            UI.get('mobile-menu-btn').addEventListener('click', () => {
+                sidebar.classList.remove('-translate-x-full');
+            });
+            UI.get('close-sidebar-btn').addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+            });
+
+            // Action Buttons
+            UI.get('btn-generate').addEventListener('click', AIEngine.generate);
+            UI.get('btn-reset').addEventListener('click', AppLogic.clearState);
+            UI.get('btn-print').addEventListener('click', () => {
+                if(!appState.hasGenerated) {
+                    UI.showToast('Please generate a plan before printing.', 'error');
+                    return;
+                }
+                window.print();
+            });
+
+            // Auto-save on input change
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', AppLogic.saveState);
+                // For text inputs, save on debounce (simplified here for brevity as change event covers blur)
+            });
+        });
+
+    </script>
+</body>
+</html>
